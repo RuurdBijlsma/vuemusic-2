@@ -4,7 +4,6 @@ export default class CustomApi {
     }
 
     async request(method, params, body) {
-        console.log("BODY", JSON.stringify(body));
         let response = await fetch(this.baseUrl + '/' + params.join('/'), {
             method,
             headers: {
@@ -21,7 +20,7 @@ export default class CustomApi {
     }
 
     async post(body, ...params) {
-        console.log('post', params, body);
+        console.info('[POST]', params, body);
         return await this.request('post', params, body);
     }
 }

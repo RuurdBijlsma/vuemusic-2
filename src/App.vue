@@ -31,7 +31,12 @@
                 <div v-if="page===0">
                     <md-tabs class="md-primary">
                         <md-tab id="tab-songs" md-label="Songs">
-                            <song-tab ref="songTab" v-on:play="playSong" v-bind:api="api" v-bind:currentSong="currentSong"></song-tab>
+                            <song-tab ref="songTab"
+                                      v-bind:playlistId="favoritesId"
+                                      v-on:play="playSong" v-bind:api="api"
+                                      v-on:remove="removeFromPlaylist"
+                                      v-on:add="addToPlaylist"
+                                      v-bind:currentSong="currentSong"></song-tab>
                         </md-tab>
                         <md-tab id="tab-artists" md-label="Artists">
                             <artist-tab></artist-tab>
@@ -119,7 +124,9 @@
                 playing: false,
                 loading: false,
                 updatingInterval: false,
-                currentPlaylist: []
+                currentPlaylist: [],
+                playlists: [],
+                favoritesId: -1
             }
         },
         components: {
@@ -130,6 +137,8 @@
             PlaylistTab
         },
         async mounted() {
+            this.playlists = await api.playlists();
+            this.favoritesId = this.playlists.find(p => p.name === 'favorites').playlistid;
             this.page = +location.hash.substr(1);
             window.addEventListener('hashchange', () => {
                 this.page = +location.hash.substr(1);
@@ -155,13 +164,30 @@
                 this.setCurrentPlaylist('favorites');
             }
 
-            if (localStorage.getItem('lastPlayedSong')) {
-                this.loadSong(this.getCurrentPlaylist().find(s => s.id === localStorage.lastPlayedSong));
-            } else {
-                this.loadSong(this.getCurrentPlaylist()[0]);
-            }
+            this.loadInitialSong();
         },
         methods: {
+            removeFromPlaylist: async function (song, playlistId) {
+                await api.remove(song.id, playlistId);
+                if (playlistId === this.favoritesId) {
+                    //refresh song tab
+                    await this.$refs.songTab.updateSongs();
+                }
+                //todo als playlist id een playlist is die nu open staat refresh die dan
+            },
+            addToPlaylist: async function (song) {
+                console.log("add ", song);
+            },
+            loadInitialSong: function () {
+                let initialSong;
+                if (localStorage.getItem('lastPlayedSong')) {
+                    initialSong = this.getCurrentPlaylist().find(s => s.id === localStorage.lastPlayedSong);
+                } else {
+                    initialSong = this.getCurrentPlaylist()[0];
+                }
+                if (initialSong)
+                    this.loadSong(initialSong);
+            },
             getCurrentPlaylist: function () {
                 // return this.playlists.find(p => p.name === this.currentPlaylist);
                 return this.$refs.songTab.songs;
@@ -185,13 +211,12 @@
                     }
                 }
                 let playlist = this.getCurrentPlaylist();
-                console.log(playlist, this.currentSong);
                 let currentIndex = playlist.findIndex(s => s.id === this.currentSong.id);
-                console.log({currentIndex});
+
                 let newIndex = (currentIndex + n) % playlist.length;
                 while (newIndex < 0)
                     newIndex += playlist.length;
-                console.log({newIndex});
+
                 await this.playSong(playlist[newIndex]);
             },
             playSong: async function (song) {

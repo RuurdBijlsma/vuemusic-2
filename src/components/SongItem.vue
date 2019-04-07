@@ -26,8 +26,8 @@
             </md-button>
 
             <md-menu-content>
-                <md-menu-item @click="removeSong(song)">Remove</md-menu-item>
-                <md-menu-item @click="playlistAdd(song)">Add to playlist</md-menu-item>
+                <md-menu-item @click="removeSong">Remove</md-menu-item>
+                <md-menu-item @click="playlistAdd">Add to playlist</md-menu-item>
             </md-menu-content>
         </md-menu>
     </div>
@@ -43,7 +43,13 @@
             song: {type: Song, required: true}
         },
         methods: {
-            secondsToHms: Utils.secondsToHms
+            secondsToHms: Utils.secondsToHms,
+            removeSong: function () {
+                this.$emit('remove');
+            },
+            playlistAdd: function () {
+                this.$emit('add');
+            },
         }
     }
 </script>

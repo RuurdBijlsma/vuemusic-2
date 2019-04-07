@@ -26,24 +26,41 @@ export default class StreamApi extends CustomApi {
         return songs.map(s => Song.fromObject(s));
     }
 
-    async songs() {
-        let songs = await this.post(this.user, 'songs');
+    async playlists(){
+        return await this.post(this.user, 'playlists');
+    }
+
+    async createPlaylist(playlistName){
+        return await this.post(this.user, 'createPlaylist', playlistName);
+    }
+
+    async deletePlaylist(playlistId){
+        return await this.post(this.user, 'deletePlaylist', playlistId);
+    }
+
+    async songs(playlistId) {
+        let songs = await this.post(this.user, 'songs', playlistId);
         return songs.map(s => Song.fromObject(s));
     }
 
-    async save(ytId) {
-        return await this.post(this.user, 'save', ytId);
+    async favorites() {
+        let songs = await this.post(this.user, 'favorites');
+        return songs.map(s => Song.fromObject(s));
     }
 
-    async remove(ytId) {
-        return await this.post(this.user, 'remove', ytId);
+    async save(ytId, playlistId) {
+        return await this.post(this.user, 'save', ytId, playlistId);
+    }
+
+    async remove(ytId, playlistId) {
+        return await this.post(this.user, 'remove', ytId, playlistId);
     }
 
     async info(ytId) {
         return await this.post(this.user, 'info', ytId);
     }
 
-    async getStreamUrl(ytId){
+    async getStreamUrl(ytId) {
         let url = (await this.info(ytId)).url;
         return this.baseUrl + '/pipe/' + encodeURIComponent(url);
     }
