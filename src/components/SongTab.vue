@@ -4,8 +4,8 @@
         <md-list>
             <md-list-item class="md-list-item-button"
                           v-for="song in songs"
-                          v-bind:active="song.id === currentSong.id"
-                          @click="playSong(song)">
+                          @click="playSong(song)"
+                          v-bind:style="{ backgroundColor: (currentSong.id === song.id)?'rgba(0,0,0,0.15)':'transparent'}">
                 <song-item v-bind:song="song"></song-item>
             </md-list-item>
         </md-list>
@@ -24,13 +24,12 @@
         components: {SongItem},
         data() {
             return {
-                songs: [],
-                currentSong: new Song(),
-                audioIsPlaying: false
+                songs: []
             }
         },
         props: {
             api: {type: StreamApi, required: true},
+            currentSong: {type: Song, required: true}
         },
         methods: {
             removeSong: function (song) {
@@ -43,11 +42,9 @@
                 this.$emit('play', song);
             },
             updateSongs: async function () {
-                if (localStorage.getItem('songs') !== null) {
+                if (localStorage.getItem('songs') !== null)
                     this.songs = JSON.parse(localStorage.songs).map(Song.fromObject);
-                    // noinspection JSIgnoredPromiseFromCall
-                    MediaHelper.checkSongsCacheStatus(this.songs);
-                }
+
                 try {
                     this.songs = (await this.api.songs()).map(Song.fromObject);
                     localStorage.songs = JSON.stringify(this.songs);

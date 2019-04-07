@@ -7,7 +7,7 @@ export default class Song {
         this.duration = duration;
         this.color = color;
         this.isCaching = false;
-        this.isCached = false;
+        this.isCached = true;
     }
 
     static fromObject(data) {

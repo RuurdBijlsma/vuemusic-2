@@ -2,15 +2,23 @@ import fs from './FileStorage';
 import Song from "@/js/Song";
 
 class MediaHelper {
-    async getAudioSource(api, ytId) {
+    async getAudioSource(api, song) {
+        let ytId = song.id;
         let fileName = ytId;
         await fs.awaitReady();
         let url;
         let exists = await fs.exists(fileName);
         if (exists)
             url = (await fs.getFileByName(fileName)).toURL();
-        else
+        else {
+            let cacheNow = !song.isCaching;
+            if (cacheNow)
+                song.isCaching = true;
             url = await api.getStreamUrl(ytId);
+            if (cacheNow)
+                setTimeout(() => this.cacheSongLocally(api, song, url), 500);
+
+        }
 
         console.log(url);
         return url;
@@ -22,16 +30,14 @@ class MediaHelper {
             await this.cacheSongLocally(api, song);
     }
 
-    async cacheSongLocally(api, song) {
-        song.isCaching = true;
+    async cacheSongLocally(api, song, url) {
         let ytId = song.id;
-        console.log("Caching song", song.id);
-        let url = await api.getStreamUrl(ytId);
+        console.log("Caching song", song.title);
         let response = await fetch(url);
         let audioBlob = await response.blob();
 
         let result = await fs.createFileFromBlob(ytId, audioBlob);
-        console.log("Cache complete", result);
+        console.log("Cache complete", song.title, result);
         song.isCaching = false;
         song.isCached = true;
     }
@@ -47,4 +53,6 @@ class MediaHelper {
     }
 }
 
-export default new MediaHelper();
+export default new
+
+MediaHelper();

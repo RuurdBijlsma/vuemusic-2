@@ -31,7 +31,7 @@
                 <div v-if="page===0">
                     <md-tabs class="md-primary">
                         <md-tab id="tab-songs" md-label="Songs">
-                            <song-tab ref="songTab" v-on:play="playSong" v-bind:api="api"></song-tab>
+                            <song-tab ref="songTab" v-on:play="playSong" v-bind:api="api" v-bind:currentSong="currentSong"></song-tab>
                         </md-tab>
                         <md-tab id="tab-artists" md-label="Artists">
                             <artist-tab></artist-tab>
@@ -60,7 +60,8 @@
                         <md-icon>skip_previous</md-icon>
                     </md-button>
                     <div class="center-play-icon">
-                        <md-progress-spinner v-if="loading" md-mode="indeterminate" class="md-accent spinner" :md-stroke=2
+                        <md-progress-spinner v-if="loading" md-mode="indeterminate" class="md-accent spinner"
+                                             :md-stroke=2
                                              :md-diameter=30></md-progress-spinner>
                         <md-button v-else class="player-play" v-on:click="togglePlayPause()">
                             <md-icon v-if="playing">pause</md-icon>
@@ -149,21 +150,24 @@
             //this.playlists = await api.playlists();
 
             if (localStorage.getItem('lastPlaylist')) {
-                this.loadPlaylist('favorites');
+                this.setCurrentPlaylist('favorites');
             } else {
-                this.loadPlaylist('favorites');
+                this.setCurrentPlaylist('favorites');
             }
 
             if (localStorage.getItem('lastPlayedSong')) {
-                this.loadSong(this.currentPlaylist.find(s => s.id === localStorage.lastPlayedSong));
+                this.loadSong(this.getCurrentPlaylist().find(s => s.id === localStorage.lastPlayedSong));
             } else {
-                this.loadSong(this.currentPlaylist[0]);
+                this.loadSong(this.getCurrentPlaylist()[0]);
             }
         },
         methods: {
-            loadPlaylist: function (playlistName) {
-                // this.currentPlaylist = this.playlists.find(p => p.name === playlistName);
-                this.currentPlaylist = this.$refs.songTab.songs;
+            getCurrentPlaylist: function () {
+                // return this.playlists.find(p => p.name === this.currentPlaylist);
+                return this.$refs.songTab.songs;
+            },
+            setCurrentPlaylist: function (playlistName) {
+                this.currentPlaylist = playlistName;
                 localStorage.lastPlaylist = playlistName;
             },
             search: function () {
@@ -173,7 +177,22 @@
                 window.location.hash = page;
             },
             skip: async function (n) {
-                console.log('skip', n);
+                if (n === -1) {
+                    let player = document.querySelector('.audio-player');
+                    if (player.currentTime > 5) {
+                        player.currentTime = 0;
+                        return;
+                    }
+                }
+                let playlist = this.getCurrentPlaylist();
+                console.log(playlist, this.currentSong);
+                let currentIndex = playlist.findIndex(s => s.id === this.currentSong.id);
+                console.log({currentIndex});
+                let newIndex = (currentIndex + n) % playlist.length;
+                while (newIndex < 0)
+                    newIndex += playlist.length;
+                console.log({newIndex});
+                await this.playSong(playlist[newIndex]);
             },
             playSong: async function (song) {
                 await this.loadSong(song);
@@ -181,13 +200,13 @@
             },
             loadSong: async function (song) {
                 return new Promise(async resolve => {
+                    this.loading = true;
                     this.currentSong = song;
                     this.setSongMetaData(song);
                     localStorage.lastPlayedSong = song.id;
-                    this.loading = true;
                     let player = document.querySelector('.audio-player');
                     player.pause();
-                    player.src = await MediaHelper.getAudioSource(this.api, song.id);
+                    player.src = await MediaHelper.getAudioSource(this.api, song);
                     player.load();
                     player.onended = () => {
                         this.skip(1);
@@ -195,7 +214,6 @@
                     player.oncanplay = async () => {
                         this.loading = false;
                         resolve();
-                        await MediaHelper.cacheSongLocallyIfNeeded(this.api, song);
                         player.oncanplay = () => {
                         };
                     };
@@ -313,25 +331,25 @@
         min-width: 35px;
     }
 
-    .center-play-icon{
+    .center-play-icon {
         display: flex;
         flex-direction: row;
         justify-content: center;
     }
 
-    .center-play-icon>*{
+    .center-play-icon > * {
         position: absolute !important;
         display: flex;
         flex-direction: row;
         justify-content: center;
-        right:36px;
+        right: 36px;
     }
 
-    .spinner{
+    .spinner {
         right: 51px;
         bottom: 21px;
     }
-    
+
     .search-bar {
         display: flex;
         flex-direction: row;
