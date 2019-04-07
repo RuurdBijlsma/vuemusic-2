@@ -1,5 +1,6 @@
- class Utils{
-    secondsToHms(seconds){
+
+class Utils {
+    secondsToHms(seconds) {
         seconds = Math.round(seconds);
         if (seconds < 60)
             return '0:' + seconds.toString().padStart(2, '0');
@@ -11,4 +12,5 @@
         return `${h}:${m}:${s}`
     }
 }
+
 export default new Utils;

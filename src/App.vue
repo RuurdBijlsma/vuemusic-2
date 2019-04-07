@@ -31,7 +31,7 @@
                 <div v-if="page===0">
                     <md-tabs class="md-primary">
                         <md-tab id="tab-songs" md-label="Songs">
-                            <song-tab v-on:play="playSong" v-bind:api="api"></song-tab>
+                            <song-tab ref="songTab" v-on:play="playSong" v-bind:api="api"></song-tab>
                         </md-tab>
                         <md-tab id="tab-artists" md-label="Artists">
                             <artist-tab></artist-tab>
@@ -59,11 +59,14 @@
                     <md-button @click="skip(-1)">
                         <md-icon>skip_previous</md-icon>
                     </md-button>
-                    <md-button class="player-play" v-on:click="togglePlayPause()">
-                        <md-icon rotate v-if="loading">cached</md-icon>
-                        <md-icon v-else-if="playing">pause</md-icon>
-                        <md-icon v-else>play_arrow</md-icon>
-                    </md-button>
+                    <div class="center-play-icon">
+                        <md-progress-spinner v-if="loading" md-mode="indeterminate" class="md-accent spinner" :md-stroke=2
+                                             :md-diameter=30></md-progress-spinner>
+                        <md-button v-else class="player-play" v-on:click="togglePlayPause()">
+                            <md-icon v-if="playing">pause</md-icon>
+                            <md-icon v-else>play_arrow</md-icon>
+                        </md-button>
+                    </div>
                     <md-button @click="skip(1)">
                         <md-icon>skip_next</md-icon>
                     </md-button>
@@ -114,7 +117,8 @@
                 progress: 0,
                 playing: false,
                 loading: false,
-                updatingInterval: false
+                updatingInterval: false,
+                currentPlaylist: []
             }
         },
         components: {
@@ -141,8 +145,27 @@
                 let progress = player.currentTime / player.duration;
                 this.progress = Math.round(progress * 10000) / 100;
             }, 10);
+
+            //this.playlists = await api.playlists();
+
+            if (localStorage.getItem('lastPlaylist')) {
+                this.loadPlaylist('favorites');
+            } else {
+                this.loadPlaylist('favorites');
+            }
+
+            if (localStorage.getItem('lastPlayedSong')) {
+                this.loadSong(this.currentPlaylist.find(s => s.id === localStorage.lastPlayedSong));
+            } else {
+                this.loadSong(this.currentPlaylist[0]);
+            }
         },
         methods: {
+            loadPlaylist: function (playlistName) {
+                // this.currentPlaylist = this.playlists.find(p => p.name === playlistName);
+                this.currentPlaylist = this.$refs.songTab.songs;
+                localStorage.lastPlaylist = playlistName;
+            },
             search: function () {
                 this.setPage(1);
             },
@@ -153,24 +176,28 @@
                 console.log('skip', n);
             },
             playSong: async function (song) {
+                await this.loadSong(song);
+                this.togglePlayPause(true);
+            },
+            loadSong: async function (song) {
                 return new Promise(async resolve => {
                     this.currentSong = song;
                     this.setSongMetaData(song);
                     localStorage.lastPlayedSong = song.id;
                     this.loading = true;
                     let player = document.querySelector('.audio-player');
+                    player.pause();
                     player.src = await MediaHelper.getAudioSource(this.api, song.id);
                     player.load();
                     player.onended = () => {
                         this.skip(1);
                     };
                     player.oncanplay = async () => {
-                        this.togglePlayPause(true);
                         this.loading = false;
-                        await MediaHelper.cacheSongLocallyIfNeeded(this.api, song.id);
-                        player.oncanplaythrough = () => {
-                        };
                         resolve();
+                        await MediaHelper.cacheSongLocallyIfNeeded(this.api, song);
+                        player.oncanplay = () => {
+                        };
                     };
                 });
             },
@@ -282,10 +309,29 @@
         padding: 10px;
     }
 
-    .player-controls .md-button {
+    .player-controls .md-button, .center-play-icon {
         min-width: 35px;
     }
 
+    .center-play-icon{
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .center-play-icon>*{
+        position: absolute !important;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        right:36px;
+    }
+
+    .spinner{
+        right: 51px;
+        bottom: 21px;
+    }
+    
     .search-bar {
         display: flex;
         flex-direction: row;
