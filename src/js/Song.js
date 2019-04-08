@@ -1,5 +1,5 @@
 export default class Song {
-    constructor(id = '', title = '', artist = '', thumbnail = '', duration = 1, color = 'grey') {
+    constructor(id = '', title = '', artist = '', thumbnail = '', duration = -1, color = 'grey') {
         this.id = id;
         this.title = title;
         this.artist = artist;

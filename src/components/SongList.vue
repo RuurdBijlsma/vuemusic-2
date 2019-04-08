@@ -7,7 +7,7 @@
                           @click="playSong(song)"
                           v-bind:style="{ backgroundColor: (currentSong.id === song.id) ? 'rgba(0,0,0,0.15)' : 'transparent'}">
                 <song-item v-bind:song="song"
-                           v-on:remove="$emit('remove', song, playlistId)"
+                           v-on:remove="$emit('remove', song)"
                            v-on:add="$emit('add', song)"></song-item>
             </md-list-item>
         </md-list>
@@ -23,9 +23,7 @@
         name: 'SongTab',
         components: {SongItem},
         data() {
-            return {
-
-            }
+            return {}
         },
         props: {
             currentSong: {type: Song, required: true},
@@ -36,11 +34,11 @@
                 this.$emit('play', song);
             },
         },
-        async mounted() {
-            await this.updateSongs();
+        mounted() {
+            MediaHelper.checkSongsCacheStatus(this.songs);
         },
-        watch:{
-            songs(){
+        watch: {
+            songs() {
                 MediaHelper.checkSongsCacheStatus(this.songs);
             }
         }

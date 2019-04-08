@@ -1,17 +1,11 @@
 <template>
     <div class="song-tab">
-
-<!--        <song-list v-bind:songs="songs" v-bind:currentSong="currentSong"></song-list>-->
-        <md-list>
-            <md-list-item class="md-list-item-button"
-                          v-for="song in songs"
-                          @click="playSong(song)"
-                          v-bind:style="{ backgroundColor: (currentSong.id === song.id) ? 'rgba(0,0,0,0.15)' : 'transparent'}">
-                <song-item v-bind:song="song"
-                           v-on:remove="$emit('remove', song, playlistId)"
-                           v-on:add="$emit('add', song)"></song-item>
-            </md-list-item>
-        </md-list>
+        <song-list
+                v-on:play="playSong"
+                v-on:add="add"
+                v-on:remove="remove"
+                v-bind:songs="songs"
+                v-bind:currentSong="currentSong"></song-list>
     </div>
 </template>
 
@@ -37,6 +31,12 @@
             playlistId: {type: Number, required: true}
         },
         methods: {
+            add: function(song){
+                this.$emit('add', song);
+            },
+            remove: function(song){
+                this.$emit('remove', song, this.playlistId);
+            },
             playSong: async function (song) {
                 this.$emit('play', song);
             },

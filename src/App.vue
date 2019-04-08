@@ -1,11 +1,14 @@
 <template>
     <div class="app">
 
-        <md-app md-waterfall md-mode="fixed-last">
-            <md-app-toolbar class="md-dense md-primary">
+        <md-app>
+            <md-app-toolbar class="md-primary">
                 <div class="md-toolbar-row">
                     <div class="search-bar ">
-                        <md-icon class="search-icon">search</md-icon>
+                        <md-button class="md-icon-button search-back" @click="setHash('home'); searchQuery=''">
+                            <md-icon class="search-icon" v-if="page!==0">arrow_back</md-icon>
+                            <md-icon class="search-icon" v-else>search</md-icon>
+                        </md-button>
                         <input type="text" class="search-input"
                                placeholder="Search"
                                v-model="searchQuery"
@@ -28,7 +31,7 @@
 
 
             <md-app-content>
-                <div v-if="page===0">
+                <div v-if="page==='home'">
                     <md-tabs class="md-primary">
                         <md-tab id="tab-songs" md-label="Songs">
                             <song-tab ref="songTab"
@@ -46,8 +49,10 @@
                         </md-tab>
                     </md-tabs>
                 </div>
-                <search-page v-if="page===1" v-bind:api="api"></search-page>
-                <playlist-page v-if="page===2"></playlist-page>
+                <search-page v-if="page==='search'" v-bind:api="api"
+                             v-bind:current-song="currentSong" v-bind:searchTerm="route[1]"
+                             ref="searchPage" v-on:play="playSearchResult"></search-page>
+                <playlist-page v-if="page==='playlist'"></playlist-page>
 
             </md-app-content>
         </md-app>
@@ -111,13 +116,18 @@
     const server = isLocal ? 'http://localhost:3000' : 'https://rtc.ruurd.dev:3000';
     const api = new StreamApi(server);
 
+    function pageFromHash() {
+        let hashParts = location.hash.split('#').slice(1);
+        let validPages = ['home', 'search', 'playlist'];
+        return validPages.includes(hashParts[0]) ? hashParts[0] : 'home';
+    }
 
     export default {
         name: 'app',
         data() {
             return {
                 currentSong: new Song(),
-                page: 0,
+                page: pageFromHash(),
                 searchQuery: "",
                 api,
                 progress: 0,
@@ -126,7 +136,8 @@
                 updatingInterval: false,
                 currentPlaylist: [],
                 playlists: [],
-                favoritesId: -1
+                favoritesId: -1,
+                route: []
             }
         },
         components: {
@@ -139,9 +150,10 @@
         async mounted() {
             this.playlists = await api.playlists();
             this.favoritesId = this.playlists.find(p => p.name === 'favorites').playlistid;
-            this.page = +location.hash.substr(1);
+
+            this.routeFromHash();
             window.addEventListener('hashchange', () => {
-                this.page = +location.hash.substr(1);
+                this.routeFromHash();
             });
             document.addEventListener('mouseup', e => this.endSeeking(e));
             document.addEventListener('touchend', e => this.endSeeking(e.changedTouches[0]));
@@ -156,17 +168,31 @@
                 this.progress = Math.round(progress * 10000) / 100;
             }, 10);
 
-            //this.playlists = await api.playlists();
-
             if (localStorage.getItem('lastPlaylist')) {
-                this.setCurrentPlaylist('favorites');
+                this.setCurrentPlaylist(this.favoritesId);
             } else {
-                this.setCurrentPlaylist('favorites');
+                this.setCurrentPlaylist(this.favoritesId);
             }
 
             this.loadInitialSong();
         },
         methods: {
+            routeFromHash: function () {
+                let hashParts = location.hash.split('#').slice(1);
+                let validPages = ['home', 'search', 'playlist'];
+                this.page = validPages.includes(hashParts[0]) ? hashParts[0] : 'home';
+                this.route = hashParts;
+                switch (this.page) {
+                    case 'search':
+                        break;
+                }
+            },
+            search: function () {
+                this.setHash('search', this.searchQuery);
+            },
+            setHash: function (...hashParts) {
+                window.location.hash = hashParts.join('#');
+            },
             removeFromPlaylist: async function (song, playlistId) {
                 await api.remove(song.id, playlistId);
                 if (playlistId === this.favoritesId) {
@@ -180,27 +206,22 @@
             },
             loadInitialSong: function () {
                 let initialSong;
-                if (localStorage.getItem('lastPlayedSong')) {
-                    initialSong = this.getCurrentPlaylist().find(s => s.id === localStorage.lastPlayedSong);
-                } else {
+                if (localStorage.getItem('lastPlayedSong'))
+                    initialSong = Song.fromObject(JSON.parse(localStorage.lastPlayedSong));
+                else
                     initialSong = this.getCurrentPlaylist()[0];
-                }
+
                 if (initialSong)
                     this.loadSong(initialSong);
             },
             getCurrentPlaylist: function () {
                 // return this.playlists.find(p => p.name === this.currentPlaylist);
+                if (this.currentPlaylist === 'search') return this.$refs.searchPage.songResults;
                 return this.$refs.songTab.songs;
             },
             setCurrentPlaylist: function (playlistName) {
                 this.currentPlaylist = playlistName;
                 localStorage.lastPlaylist = playlistName;
-            },
-            search: function () {
-                this.setPage(1);
-            },
-            setPage: function (page) {
-                window.location.hash = page;
             },
             skip: async function (n) {
                 if (n === -1) {
@@ -219,7 +240,13 @@
 
                 await this.playSong(playlist[newIndex]);
             },
+            playSearchResult: async function (song) {
+                this.currentPlaylist = 'search';
+                await this.loadSong(song);
+                this.togglePlayPause(true);
+            },
             playSong: async function (song) {
+                this.currentPlaylist = this.favoritesId;
                 await this.loadSong(song);
                 this.togglePlayPause(true);
             },
@@ -228,7 +255,7 @@
                     this.loading = true;
                     this.currentSong = song;
                     this.setSongMetaData(song);
-                    localStorage.lastPlayedSong = song.id;
+                    localStorage.lastPlayedSong = JSON.stringify(song);
                     let player = document.querySelector('.audio-player');
                     player.pause();
                     player.src = await MediaHelper.getAudioSource(this.api, song);
@@ -310,6 +337,12 @@
                 player.currentTime = time;
             },
             secondsToHms: Utils.secondsToHms
+        },
+        watch: {
+            searchQuery() {
+                if (this.searchQuery !== '')
+                    this.page = 1
+            }
         }
     }
 </script>
@@ -319,6 +352,9 @@
         font-family: 'Roboto', Helvetica, Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        height: calc(100% - 100px);
+        position: fixed;
+        width: 100%;
     }
 
     .music-player {

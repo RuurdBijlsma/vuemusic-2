@@ -15,8 +15,7 @@
             <div class="song-bottom-info  md-caption">
                 <span class="song-cached"><md-icon v-if="!song.isCached">cloud</md-icon></span>
                 <span class="song-artist">{{song.artist}}</span>
-                •
-                <span class="song-duration">{{secondsToHms(song.duration)}}</span>
+                <span v-if="song.duration >= 0" class="song-duration"> • {{secondsToHms(song.duration)}}</span>
             </div>
         </div>
 
