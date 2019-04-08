@@ -46,7 +46,7 @@
                         </md-tab>
                     </md-tabs>
                 </div>
-                <search-page v-if="page===1"></search-page>
+                <search-page v-if="page===1" v-bind:api="api"></search-page>
                 <playlist-page v-if="page===2"></playlist-page>
 
             </md-app-content>

@@ -1,7 +1,6 @@
 <template>
     <div class="song-tab">
 
-<!--        <song-list v-bind:songs="songs" v-bind:currentSong="currentSong"></song-list>-->
         <md-list>
             <md-list-item class="md-list-item-button"
                           v-for="song in songs"
@@ -16,46 +15,35 @@
 </template>
 
 <script>
-    import StreamApi from "@/js/StreamApi";
     import Song from "@/js/Song";
     import SongItem from '@/components/SongItem';
     import MediaHelper from '@/js/MediaHelper';
-    import SongList from '@/components/SongList';
 
     export default {
         name: 'SongTab',
-        components: {SongItem, SongList},
+        components: {SongItem},
         data() {
             return {
-                songs: [],
-                loaded: false,
+
             }
         },
         props: {
-            api: {type: StreamApi, required: true},
             currentSong: {type: Song, required: true},
-            playlistId: {type: Number, required: true}
+            songs: {type: Array, required: true}
         },
         methods: {
             playSong: async function (song) {
                 this.$emit('play', song);
             },
-            updateSongs: async function () {
-                if (localStorage.getItem('songs') !== null)
-                    this.songs = JSON.parse(localStorage.songs).map(Song.fromObject);
-
-                try {
-                    this.songs = (await this.api.favorites()).map(Song.fromObject);
-                    localStorage.songs = JSON.stringify(this.songs);
-                    // noinspection JSIgnoredPromiseFromCall
-                    MediaHelper.checkSongsCacheStatus(this.songs);
-                } catch (ignored) {
-                }
-            },
         },
         async mounted() {
             await this.updateSongs();
         },
+        watch:{
+            songs(){
+                MediaHelper.checkSongsCacheStatus(this.songs);
+            }
+        }
     }
 </script>
 
