@@ -129,8 +129,12 @@
         async mounted() {
             console.log(NowPlaying);
             this.searchQuery = this.$route.params.query || '';
-            this.playlists = await api.playlists();
-            this.favoritesId = this.playlists.find(p => p.name === 'favorites').playlistid;
+            try {
+                //todo offline playlists
+                this.playlists = await api.playlists();
+                this.favoritesId = this.playlists.find(p => p.name === 'favorites').playlistid;
+            } catch (e) {
+            }
 
             document.addEventListener('mouseup', e => this.endSeeking(e));
             document.addEventListener('touchend', e => this.endSeeking(e.changedTouches[0]));
@@ -156,7 +160,7 @@
                 await api.remove(song.id, playlistId);
                 if (playlistId === this.favoritesId) {
                     NowPlaying.playlistQueues.favorites.update();
-                }else{
+                } else {
                     NowPlaying.playlistQueues[playlistId].update();
                 }
                 //todo als playlist id een playlist is die nu open staat refresh die dan
