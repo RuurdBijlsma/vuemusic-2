@@ -1,63 +1,35 @@
 <template>
-    <div class="app">
-
-        <md-app>
-            <md-app-toolbar class="md-primary">
-                <div class="md-toolbar-row">
-                    <div class="search-bar ">
-                        <md-button class="md-icon-button search-back" @click="setHash('home'); searchQuery=''">
-                            <md-icon class="search-icon" v-if="page!==0">arrow_back</md-icon>
-                            <md-icon class="search-icon" v-else>search</md-icon>
-                        </md-button>
-                        <input type="text" class="search-input"
-                               placeholder="Search"
-                               v-model="searchQuery"
-                               v-on:keydown.enter="search()">
-                        <md-button class="md-icon-button search-cancel"
-                                   @click="searchQuery = ''"
-                                   v-bind:style="{ opacity: searchQuery === '' ? 0 : 1 }">
-                            <md-icon>cancel</md-icon>
-                        </md-button>
-                    </div>
-
-                    <div class="md-toolbar-section-end">
-                        <md-button class="md-icon-button">
-                            <md-avatar class="md-avatar-icon md-secondary">A</md-avatar>
-                        </md-button>
-                    </div>
-                </div>
-
-            </md-app-toolbar>
-
-
-            <md-app-content>
-                <div v-if="page==='home'">
-                    <md-tabs class="md-primary">
-                        <md-tab id="tab-songs" md-label="Songs">
-                            <song-tab ref="songTab"
-                                      v-bind:playlistId="favoritesId"
-                                      v-on:play="playSong" v-bind:api="api"
-                                      v-on:remove="removeFromPlaylist"
-                                      v-on:add="addToPlaylist"
-                                      v-bind:currentSong="currentSong"></song-tab>
-                        </md-tab>
-                        <md-tab id="tab-artists" md-label="Artists">
-                            <artist-tab></artist-tab>
-                        </md-tab>
-                        <md-tab id="tab-playlists" md-label="Playlists">
-                            <playlist-tab></playlist-tab>
-                        </md-tab>
-                    </md-tabs>
-                </div>
-                <search-page v-if="page==='search'" v-bind:api="api"
-                             v-bind:current-song="currentSong" v-bind:searchTerm="route[1]"
-                             ref="searchPage" v-on:play="playSearchResult"></search-page>
-                <playlist-page v-if="page==='playlist'"></playlist-page>
-
-            </md-app-content>
-        </md-app>
-
-        <div class="player">
+    <div id="app">
+        <md-content class="top-toolbar md-primary">
+            <div class="search-bar ">
+                <md-button class="md-icon-button search-back" @click="$router.push('/'); searchQuery = ''">
+                    <md-icon v-if="$route.name === 'search'" class="search-icon">arrow_back</md-icon>
+                    <md-icon v-else class="search-icon">search</md-icon>
+                </md-button>
+                <input type="text" class="search-input"
+                       placeholder="Search"
+                       @keydown.enter="performSearch()"
+                       v-model="searchQuery">
+                <md-button class="md-icon-button search-cancel"
+                           @click="searchQuery = ''"
+                           :style="{ opacity: searchQuery === '' ? 0 : 1 }">
+                    <md-icon>cancel</md-icon>
+                </md-button>
+            </div>
+            <md-button class="md-icon-button md-primary login-avatar">
+                <md-avatar class="md-avatar-icon">A</md-avatar>
+            </md-button>
+        </md-content>
+        <md-content class="main-content">
+            <router-view
+                    @play="playSong"
+                    @add="showPlaylistDialog"
+                    @remove="removeFromPlaylist"
+                    :api="api"
+                    :current-song="currentSong"
+                    :favorites-id="favoritesId"/>
+        </md-content>
+        <md-content class="bottom-player md-elevation-2">
             <div class="player-container">
                 <div class="player-thumbnail"
                      v-bind:style="{ backgroundImage: 'url(' + currentSong.thumbnail + ')' }"></div>
@@ -70,7 +42,9 @@
                         <md-icon>skip_previous</md-icon>
                     </md-button>
                     <div class="center-play-icon">
-                        <md-progress-spinner v-if="loading" md-mode="indeterminate" class="md-accent spinner"
+                        <md-progress-spinner v-if="loading"
+                                             md-mode="indeterminate"
+                                             class="md-accent spinner"
                                              :md-stroke=2
                                              :md-diameter=30></md-progress-spinner>
                         <md-button v-else class="player-play" v-on:click="togglePlayPause()">
@@ -94,16 +68,28 @@
                     <div class="seek-thumb"
                          v-bind:style="{ backgroundColor: currentSong.color, left: 'calc(' + progress + '% - 4.5px)'}"></div>
                 </div>
-                <span>{{secondsToHms(currentSong.duration)}}</span>
+                <span :style="{opacity: currentSong.duration>=0 ? 1 : 0}">{{secondsToHms(currentSong.duration)}}</span>
             </div>
-        </div>
+        </md-content>
+        <md-dialog :md-active.sync="showDialog" :md-fullscreen="false">
+            <md-dialog-title>Add to playlist</md-dialog-title>
+            <md-list>
+                <md-subheader>{{songToAdd.artist}} - {{songToAdd.title}}</md-subheader>
+                <md-list-item class="md-list-item-button" v-for="playlist in playlists">
+                    <md-button class="md-ripple add-button" @click="addToPlaylist(songToAdd, playlist.playlistid)">
+                        {{playlist.name}}
+                    </md-button>
+                </md-list-item>
+            </md-list>
 
+            <md-dialog-actions>
+                <md-button class="md-accent" @click="showDialog = false">Cancel</md-button>
+            </md-dialog-actions>
+        </md-dialog>
     </div>
 </template>
 
 <script>
-    import SearchPage from './components/SearchPage.vue';
-    import PlaylistPage from './components/PlaylistPage.vue';
     import SongTab from './components/SongTab';
     import ArtistTab from './components/ArtistTab';
     import PlaylistTab from './components/PlaylistTab';
@@ -111,23 +97,17 @@
     import StreamApi from './js/StreamApi';
     import Song from "@/js/Song";
     import Utils from '@/js/Utils';
+    import NowPlaying from '@/js/NowPlaying';
 
     const isLocal = location.href.includes('localhost') || location.href.includes('127.0.0.1');
     const server = isLocal ? 'http://localhost:3000' : 'https://rtc.ruurd.dev:3000';
     const api = new StreamApi(server);
 
-    function pageFromHash() {
-        let hashParts = location.hash.split('#').slice(1);
-        let validPages = ['home', 'search', 'playlist'];
-        return validPages.includes(hashParts[0]) ? hashParts[0] : 'home';
-    }
-
     export default {
-        name: 'app',
+        name: 'App',
         data() {
             return {
                 currentSong: new Song(),
-                page: pageFromHash(),
                 searchQuery: "",
                 api,
                 progress: 0,
@@ -137,24 +117,21 @@
                 currentPlaylist: [],
                 playlists: [],
                 favoritesId: -1,
-                route: []
+                showDialog: false,
+                songToAdd: new Song()
             }
         },
         components: {
-            SearchPage,
-            PlaylistPage,
             SongTab,
             ArtistTab,
             PlaylistTab
         },
         async mounted() {
+            console.log(NowPlaying);
+            this.searchQuery = this.$route.params.query || '';
             this.playlists = await api.playlists();
             this.favoritesId = this.playlists.find(p => p.name === 'favorites').playlistid;
 
-            this.routeFromHash();
-            window.addEventListener('hashchange', () => {
-                this.routeFromHash();
-            });
             document.addEventListener('mouseup', e => this.endSeeking(e));
             document.addEventListener('touchend', e => this.endSeeking(e.changedTouches[0]));
             document.addEventListener('mousemove', e => this.seek(e));
@@ -168,60 +145,45 @@
                 this.progress = Math.round(progress * 10000) / 100;
             }, 10);
 
-            if (localStorage.getItem('lastPlaylist')) {
-                this.setCurrentPlaylist(this.favoritesId);
-            } else {
-                this.setCurrentPlaylist(this.favoritesId);
-            }
-
             this.loadInitialSong();
         },
         methods: {
-            routeFromHash: function () {
-                let hashParts = location.hash.split('#').slice(1);
-                let validPages = ['home', 'search', 'playlist'];
-                this.page = validPages.includes(hashParts[0]) ? hashParts[0] : 'home';
-                this.route = hashParts;
-                switch (this.page) {
-                    case 'search':
-                        break;
-                }
-            },
-            search: function () {
-                this.setHash('search', this.searchQuery);
-            },
-            setHash: function (...hashParts) {
-                window.location.hash = hashParts.join('#');
+            performSearch: function () {
+                this.$router.push('/search/' + this.searchQuery);
+                console.log(this.searchQuery);
             },
             removeFromPlaylist: async function (song, playlistId) {
                 await api.remove(song.id, playlistId);
                 if (playlistId === this.favoritesId) {
-                    //refresh song tab
-                    await this.$refs.songTab.updateSongs();
+                    NowPlaying.playlistQueues.favorites.update();
+                }else{
+                    NowPlaying.playlistQueues[playlistId].update();
                 }
                 //todo als playlist id een playlist is die nu open staat refresh die dan
             },
-            addToPlaylist: async function (song) {
-                console.log("add ", song);
+            async addToPlaylist(song, playlistId) {
+                this.showDialog = false;
+                if (song.id === '')
+                    return;
+                try {
+                    await api.save(song.id, playlistId);
+                } catch (e) {
+                    alert("Can't reach server, song has not been added to playlist");
+                }
+            },
+            showPlaylistDialog: async function (song) {
+                this.showDialog = true;
+                this.songToAdd = song;
             },
             loadInitialSong: function () {
                 let initialSong;
                 if (localStorage.getItem('lastPlayedSong'))
                     initialSong = Song.fromObject(JSON.parse(localStorage.lastPlayedSong));
                 else
-                    initialSong = this.getCurrentPlaylist()[0];
+                    initialSong = NowPlaying.queue.songs[0];
 
                 if (initialSong)
                     this.loadSong(initialSong);
-            },
-            getCurrentPlaylist: function () {
-                // return this.playlists.find(p => p.name === this.currentPlaylist);
-                if (this.currentPlaylist === 'search') return this.$refs.searchPage.songResults;
-                return this.$refs.songTab.songs;
-            },
-            setCurrentPlaylist: function (playlistName) {
-                this.currentPlaylist = playlistName;
-                localStorage.lastPlaylist = playlistName;
             },
             skip: async function (n) {
                 if (n === -1) {
@@ -231,22 +193,19 @@
                         return;
                     }
                 }
-                let playlist = this.getCurrentPlaylist();
+                let playlist = NowPlaying.queue.songs;
+                console.log(NowPlaying, NowPlaying.queue.songs);
                 let currentIndex = playlist.findIndex(s => s.id === this.currentSong.id);
 
                 let newIndex = (currentIndex + n) % playlist.length;
                 while (newIndex < 0)
                     newIndex += playlist.length;
 
-                await this.playSong(playlist[newIndex]);
+                await this.playSong(playlist[newIndex], NowPlaying.queueName);
             },
-            playSearchResult: async function (song) {
-                this.currentPlaylist = 'search';
-                await this.loadSong(song);
-                this.togglePlayPause(true);
-            },
-            playSong: async function (song) {
-                this.currentPlaylist = this.favoritesId;
+            playSong: async function (song, queue = 'favorites') {
+                NowPlaying.queueName = queue;
+                //todo Set queue to favorites
                 await this.loadSong(song);
                 this.togglePlayPause(true);
             },
@@ -264,6 +223,8 @@
                         this.skip(1);
                     };
                     player.oncanplay = async () => {
+                        if (player.duration)
+                            song.duration = player.duration;
                         this.loading = false;
                         resolve();
                         player.oncanplay = () => {
@@ -338,46 +299,66 @@
             },
             secondsToHms: Utils.secondsToHms
         },
-        watch: {
-            searchQuery() {
-                if (this.searchQuery !== '')
-                    this.page = 1
-            }
-        }
+        watch: {}
     }
 </script>
 
 <style>
-    .app {
-        font-family: 'Roboto', Helvetica, Arial, sans-serif;
+
+    #app {
+        font-family: 'Avenir', Helvetica, Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        height: calc(100% - 100px);
-        position: fixed;
-        width: 100%;
+        color: #2c3e50;
     }
 
-    .music-player {
+    .top-toolbar {
+        z-index: 3;
         position: fixed;
+        top: 0;
         width: 100%;
+        height: 60px;
+        padding: 5px;
+        display: flex;
+        flex-direction: row;
+    }
+
+    .top-toolbar > input {
+        border: none;
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.4) none;
+        height: calc(100% - 15px);
+        width: calc(100% - 70px);
+        margin: 7.5px;
+        padding: 10px;
+        font-size: 14px;
+        color: white;
+        font-weight: 500;
+    }
+
+    .login-avatar {
+        top: 5px;
+    }
+
+    .top-toolbar > input:focus {
+        outline: none;
+    }
+
+    .main-content {
+        z-index: 1;
+        height: calc(100% - 160px);
+        position: fixed;
+        top: 60px;
+        width: 100%;
+        overflow-y: auto;
+    }
+
+    .bottom-player {
+        z-index: 3;
+        position: fixed;
         bottom: 0;
-        left: 0;
         height: 100px;
-        background-color: red;
-        z-index: 5;
-    }
-
-    .md-content.md-tabs-content {
-        height: auto !important;
-    }
-
-    .md-tab {
-        padding: 0 !important;
-    }
-
-    .md-app-content {
-        padding: 0px !important;
-        margin-top: 0px !important;
+        width: 100%;
     }
 
     .player-controls {
@@ -411,42 +392,12 @@
         bottom: 21px;
     }
 
-    .search-bar {
-        display: flex;
-        flex-direction: row;
-        background-color: rgba(255, 255, 255, 0.3);
-        height: 3em;
-        border-radius: 0.5em;
-        width: 100%;
-        justify-content: space-around;
-        margin-right: 0.5em;
-    }
-
-    .search-icon, .search-cancel {
-        transform: scale(0.8);
-    }
-
     .player {
         position: fixed;
         width: 100%;
         height: 100px;
         bottom: 0;
         background-color: rgb(200, 200, 200);
-    }
-
-    .search-input {
-        background-color: transparent;
-        width: calc(100% - 6em);
-        border: none;
-    }
-
-    .search-input:focus {
-        outline: none;
-    }
-
-    .search-bar > input {
-        color: white;
-        font-size: 1em;
     }
 
     .seek-information {
@@ -548,6 +499,41 @@
         line-height: 70px;
         height: 70px;
         font-size: 30px !important;
+    }
+
+
+    .search-input {
+        background-color: transparent;
+        width: calc(100% - 6em);
+        border: none;
+    }
+
+    .search-input:focus {
+        outline: none;
+    }
+
+    .search-bar > input {
+        color: white;
+        font-size: 1em;
+    }
+
+    .search-bar {
+        display: flex;
+        flex-direction: row;
+        background-color: rgba(255, 255, 255, 0.3);
+        height: 3em;
+        border-radius: 0.5em;
+        width: 100%;
+        justify-content: space-around;
+        margin: 5px;
+    }
+
+    .search-bar .md-icon {
+        color: white !important;
+    }
+
+    .search-icon, .search-cancel {
+        transform: scale(0.8);
     }
 
     ::placeholder {

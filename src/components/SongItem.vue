@@ -1,5 +1,5 @@
 <template>
-    <div class="song-item">
+    <div class="song-item"  @click="$emit('play')">
         <div class="thumbnail-square">
             <div class="song-thumbnail"
                  v-bind:style="{ backgroundImage: 'url(' + song.thumbnail + ')' }"></div>
@@ -19,14 +19,14 @@
             </div>
         </div>
 
-        <md-menu md-direction="bottom-end" md-close-on-select md-close-on-click>
+        <md-menu md-direction="bottom-end" md-close-on-select md-close-on-click @click="$event.stopPropagation()">
             <md-button md-menu-trigger>
                 <md-icon>more_vert</md-icon>
             </md-button>
 
             <md-menu-content>
-                <md-menu-item @click="removeSong">Remove</md-menu-item>
-                <md-menu-item @click="playlistAdd">Add to playlist</md-menu-item>
+                <md-menu-item @click="$emit('remove')">Remove</md-menu-item>
+                <md-menu-item @click="$emit('add')">Add to playlist</md-menu-item>
             </md-menu-content>
         </md-menu>
     </div>
@@ -39,16 +39,10 @@
     export default {
         name: 'SongItem',
         props: {
-            song: {type: Song, required: true}
+            song: {type: Song, required: true},
         },
         methods: {
             secondsToHms: Utils.secondsToHms,
-            removeSong: function () {
-                this.$emit('remove');
-            },
-            playlistAdd: function () {
-                this.$emit('add');
-            },
         }
     }
 </script>

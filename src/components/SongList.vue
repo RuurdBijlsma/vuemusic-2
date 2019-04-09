@@ -1,14 +1,15 @@
 <template>
     <div class="song-tab">
-
+        <h3 v-if="songs.length === 0">No songs found</h3>
         <md-list>
+            <md-subheader v-if="title">{{title}}</md-subheader>
             <md-list-item class="md-list-item-button"
                           v-for="song in songs"
-                          @click="playSong(song)"
-                          v-bind:style="{ backgroundColor: (currentSong.id === song.id) ? 'rgba(0,0,0,0.15)' : 'transparent'}">
-                <song-item v-bind:song="song"
-                           v-on:remove="$emit('remove', song)"
-                           v-on:add="$emit('add', song)"></song-item>
+                          :style="{ backgroundColor: (currentSong.id === song.id) ? 'rgba(0,0,0,0.15)' : 'transparent'}">
+                <song-item :song="song"
+                           @play="$emit('play', song)"
+                           @remove="$emit('remove', song)"
+                           @add="$emit('add', song)"></song-item>
             </md-list-item>
         </md-list>
     </div>
@@ -20,20 +21,17 @@
     import MediaHelper from '@/js/MediaHelper';
 
     export default {
-        name: 'SongTab',
+        name: 'song-list',
         components: {SongItem},
         data() {
             return {}
         },
         props: {
             currentSong: {type: Song, required: true},
-            songs: {type: Array, required: true}
+            songs: {type: Array, required: true},
+            title: {type: String, required: false},
         },
-        methods: {
-            playSong: async function (song) {
-                this.$emit('play', song);
-            },
-        },
+        methods: {},
         mounted() {
             MediaHelper.checkSongsCacheStatus(this.songs);
         },
@@ -46,7 +44,7 @@
 </script>
 
 <style scoped>
-    .song-tab {
-        padding-bottom: 100px;
+    h3 {
+        text-align: center;
     }
 </style>
