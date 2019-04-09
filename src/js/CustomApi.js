@@ -12,7 +12,12 @@ export default class CustomApi {
             },
             body: JSON.stringify(body)
         });
-        return await response.json();
+        let text = await response.text();
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.log("Error parsing json response:", text);
+        }
     }
 
     async get(...params) {

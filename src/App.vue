@@ -131,7 +131,8 @@
             PlaylistTab
         },
         async mounted() {
-            console.log(NowPlaying);
+
+            console.log(NowPlaying, api);
             this.searchQuery = this.$route.params.query || '';
             try {
                 //todo offline playlists

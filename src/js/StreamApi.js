@@ -16,9 +16,8 @@ export default class StreamApi extends CustomApi {
         return btoa(new Uint8Array(buffer).reduce((s, b) => s + String.fromCharCode(b), ''));
     }
 
-    async register() {
-        let success = await this.post(this.user, 'register', query);
-        return success;
+    async register(user) {
+        return await this.post(user, 'register');
     }
 
     async search(query) {
