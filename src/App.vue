@@ -1,3 +1,7 @@
+<!--TODO-->
+<!-- TODO Save all songs offline feature-->
+<!-- When cache completes sometimes caching spinner doesnt go away-->
+
 <template>
     <div id="app">
         <md-content class="top-toolbar md-primary">
