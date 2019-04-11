@@ -1,5 +1,5 @@
 <!--TODO-->
-<!-- TODO Save all songs offline feature-->
+<!--Artists  &  playlists & put all this online-->
 <!-- When cache completes sometimes caching spinner doesnt go away-->
 
 <template>
@@ -290,11 +290,13 @@
                     setPlaying = player.paused;
                 }
                 if (setPlaying) {
-                    await player.play();
+                    navigator.mediaSession.playbackState = "playing";
                     this.playing = true;
+                    await player.play();
                 } else {
-                    player.pause();
+                    navigator.mediaSession.playbackState = "paused";
                     this.playing = false;
+                    player.pause();
                 }
             },
             setSongMetaData: function (song) {
@@ -318,10 +320,10 @@
                     await this.togglePlayPause(false);
                 });
                 navigator.mediaSession.setActionHandler('previoustrack', () => {
-                    this.$emit('skip', -1);
+                    this.skip(-1);
                 });
                 navigator.mediaSession.setActionHandler('nexttrack', () => {
-                    this.$emit('skip', 1);
+                    this.skip(1);
                 });
             },
             startSeeking: function (e) {
