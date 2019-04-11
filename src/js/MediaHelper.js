@@ -1,8 +1,8 @@
 import fs from './FileStorage';
-import Song from "@/js/Song";
+import StreamApi from '@/js/StreamApi';
 
 class MediaHelper {
-    async getAudioSource(api, song) {
+    async getAudioSource(song) {
         let ytId = song.id;
         let fileName = ytId;
         await fs.awaitReady();
@@ -14,9 +14,9 @@ class MediaHelper {
             let cacheNow = !song.isCaching;
             if (cacheNow)
                 song.isCaching = true;
-            url = await api.getStreamUrl(ytId);
+            url = await StreamApi.getStreamUrl(ytId);
             if (cacheNow)
-                setTimeout(() => this.cacheSongLocally(api, song, url), 500);
+                setTimeout(() => this.cacheSongLocally(song, url), 500);
 
         }
 
@@ -24,13 +24,13 @@ class MediaHelper {
         return url;
     }
 
-    async cacheSongLocallyIfNeeded(api, song) {
+    async cacheSongLocallyIfNeeded(song) {
         let ytId = song.id;
         if (!await fs.exists(ytId))
-            await this.cacheSongLocally(api, song);
+            await this.cacheSongLocally(song);
     }
 
-    async cacheSongLocally(api, song, url) {
+    async cacheSongLocally(song, url) {
         let ytId = song.id;
         console.log("Caching song", song.title);
         let response = await fetch(url);

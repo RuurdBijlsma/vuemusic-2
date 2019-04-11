@@ -30,7 +30,6 @@
             SongList
         },
         props: {
-            api: {type: StreamApi, required: true},
             currentSong: {type: Song, required: true},
             favoritesId: {type: Number, required: true}
         },
@@ -52,11 +51,10 @@
             },
             async search(query) {
                 this.loading = true;
-                this.songs = await this.api.search(query);
+                this.songs = await StreamApi.search(query);
                 this.loading = false;
 
-                NowPlaying.playlistQueues.search.songs = this.songs;
-                NowPlaying.playlistQueues.search.update = () => this.search(query);
+                NowPlaying.setQueue('search', this.songs, () => this.search(query));
             }
         },
         async mounted() {

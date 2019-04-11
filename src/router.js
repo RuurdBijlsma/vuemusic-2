@@ -3,10 +3,9 @@ import Router from 'vue-router'
 import Home from './views/Home.vue'
 import Search from "@/views/Search";
 import Playlist from "@/views/Playlist";
-import Song from "@/js/Song";
-import StreamApi from "@/js/StreamApi";
+import Login from "./views/Login";
 
-Vue.use(Router)
+Vue.use(Router);
 
 export default new Router({
     routes: [
@@ -31,6 +30,11 @@ export default new Router({
             path: '/playlist/:userName/:playlistName',
             name: 'playlist',
             component: Playlist
+        },
+        {
+            path: '/login',
+            name: 'login',
+            component: Login
         }
     ]
 })

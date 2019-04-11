@@ -26,7 +26,6 @@
             }
         },
         props: {
-            api: {type: StreamApi, required: true},
             currentSong: {type: Song, required: true},
             playlistId: {type: Number, required: true}
         },
@@ -42,15 +41,14 @@
             },
             setSongs: function (songs) {
                 this.songs = songs;
-                NowPlaying.playlistQueues.favorites.songs = songs;
-                NowPlaying.playlistQueues.favorites.update = () => this.updateSongs();
+                NowPlaying.setQueue('favorites', songs, () => this.updateSongs());
             },
             updateSongs: async function () {
                 if (localStorage.getItem('songs') !== null)
                     this.setSongs(JSON.parse(localStorage.songs).map(Song.fromObject));
 
                 try {
-                    this.setSongs((await this.api.favorites()).map(Song.fromObject));
+                    this.setSongs((await StreamApi.favorites()).map(Song.fromObject));
                     localStorage.songs = JSON.stringify(this.songs);
                     // noinspection JSIgnoredPromiseFromCall
                     MediaHelper.checkSongsCacheStatus(this.songs);

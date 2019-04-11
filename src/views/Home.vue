@@ -6,7 +6,6 @@
                         @play="playSong"
                         @add="add"
                         @remove="remove"
-                        :api="api"
                         :current-song="currentSong"
                         :playlist-id="favoritesId"></song-tab>
             </md-tab>
@@ -35,12 +34,11 @@
             SongTab
         },
         props: {
-            api: {type: StreamApi, required: true},
             currentSong: {type: Song, required: true},
             favoritesId: {type: Number, required: true}
         },
         mounted() {
-            console.log(this.api, this.currentSong, this.favoritesId);
+            // console.log(, this.currentSong, this.favoritesId);
         },
         methods: {
             add: function (song) {

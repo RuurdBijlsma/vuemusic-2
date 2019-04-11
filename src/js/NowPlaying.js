@@ -1,16 +1,33 @@
+import Utils from '@/js/Utils';
+
 class NowPlaying {
     constructor() {
         this.playlistQueues = {
-            favorites:{
-                update:()=>{},
-                songs:[]
+            favorites: {
+                update: () => {
+                },
+                songs: [],
+                shuffledSongs: [],
             },
-            search:{
-                update:()=>{},
-                songs:[]
+            search: {
+                update: () => {
+                },
+                songs: [],
+                shuffledSongs: [],
             },
         };
         this.queueName = localStorage.getItem('lastQueue') === null ? 'favorites' : localStorage.lastQueue;
+    }
+
+    setQueue(playlist, songs, update) {
+        this.playlistQueues[playlist].songs = songs;
+        this.playlistQueues[playlist].update = update;
+        this.playlistQueues[playlist].shuffledSongs = Utils.shuffle([...songs]);
+        console.log(this.playlistQueues[playlist]);
+    }
+
+    reshuffle(playlist) {
+        this.playlistQueues[playlist].shuffledSongs = Utils.shuffle([...this.playlistQueues[playlist].songs]);
     }
 
     get queue() {

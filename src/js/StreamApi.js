@@ -1,23 +1,37 @@
 import CustomApi from './CustomApi';
 import Song from './Song';
 
-export default class StreamApi extends CustomApi {
-    constructor(server) {
-        super(server);
-
-        this.user = {
-            user: 'defaultuser',
-            password: 'T1DSf3FVuf1RHy1fu0TdSRWGt3zb/xwRBHSJiz8Zh8I='
-        }
+class StreamApi extends CustomApi {
+    constructor() {
+        super('');
+        if (localStorage.getItem('user') !== null)
+            this.user = JSON.parse(localStorage.user);
+        else this.user = {user: '', password: ''};
     }
 
-    async hash(value, algorithm = 'SHA-256') {
-        let buffer = await crypto.subtle.digest(algorithm, new TextEncoder().encode(value));
-        return btoa(new Uint8Array(buffer).reduce((s, b) => s + String.fromCharCode(b), ''));
+    get hasUser() {
+        return this.user.hasOwnProperty('user') && this.user.user !== '';
     }
 
-    async register(user) {
-        return await this.post(user, 'register');
+    async post(body, ...route) {
+        if (!this.hasUser)
+            console.warn("Client intercept: not logged in");
+        let result = await super.post(body, ...route);
+        if (result.hasOwnProperty('status') && result.status === 'not logged in')
+            console.warn('SERVER: ', result);
+        return result;
+    }
+
+    setServer(server) {
+        this.baseUrl = server;
+    }
+
+    async login(username, password) {
+        return await this.post({user: username, password}, 'login');
+    }
+
+    async register(username, password) {
+        return await this.post({user: username, password}, 'register');
     }
 
     async search(query) {
@@ -25,15 +39,15 @@ export default class StreamApi extends CustomApi {
         return songs.map(s => Song.fromObject(s));
     }
 
-    async playlists(){
+    async playlists() {
         return await this.post(this.user, 'playlists');
     }
 
-    async createPlaylist(playlistName){
+    async createPlaylist(playlistName) {
         return await this.post(this.user, 'createPlaylist', playlistName);
     }
 
-    async deletePlaylist(playlistId){
+    async deletePlaylist(playlistId) {
         return await this.post(this.user, 'deletePlaylist', playlistId);
     }
 
@@ -64,3 +78,5 @@ export default class StreamApi extends CustomApi {
         return this.baseUrl + '/pipe/' + encodeURIComponent(url);
     }
 }
+
+export default new StreamApi();

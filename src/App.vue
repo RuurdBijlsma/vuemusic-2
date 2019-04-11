@@ -20,8 +20,8 @@
                     <md-icon>cancel</md-icon>
                 </md-button>
             </div>
-            <md-button class="md-icon-button md-primary login-avatar">
-                <md-avatar class="md-avatar-icon">A</md-avatar>
+            <md-button @click="logout()" class="md-icon-button md-primary login-avatar">
+                <md-avatar class="md-avatar-icon">{{firstLetter}}</md-avatar>
             </md-button>
         </md-content>
         <md-content class="main-content">
@@ -29,9 +29,13 @@
                     @play="playSong"
                     @add="showPlaylistDialog"
                     @remove="removeFromPlaylist"
-                    :api="api"
                     :current-song="currentSong"
                     :favorites-id="favoritesId"/>
+
+            <md-button @click="toggleShuffle()" class="md-fab shuffle-fab"
+                       :class="shuffleEnabled ? 'md-accent' : 'md-primary'">
+                <md-icon>shuffle</md-icon>
+            </md-button>
         </md-content>
         <md-content class="bottom-player md-elevation-2">
             <div class="player-container">
@@ -102,10 +106,12 @@
     import Song from "@/js/Song";
     import Utils from '@/js/Utils';
     import NowPlaying from '@/js/NowPlaying';
+    import AccountManager from '@/js/AccountManager';
+    import Swal from 'sweetalert2';
 
     const isLocal = location.href.includes('localhost') || location.href.includes('127.0.0.1');
     const server = isLocal ? 'http://localhost:3000' : 'https://rtc.ruurd.dev:3000';
-    const api = new StreamApi(server);
+    StreamApi.setServer(server);
 
     export default {
         name: 'App',
@@ -113,7 +119,6 @@
             return {
                 currentSong: new Song(),
                 searchQuery: "",
-                api,
                 progress: 0,
                 playing: false,
                 loading: false,
@@ -122,7 +127,9 @@
                 playlists: [],
                 favoritesId: -1,
                 showDialog: false,
-                songToAdd: new Song()
+                songToAdd: new Song(),
+                firstLetter: 'A',
+                shuffleEnabled: false
             }
         },
         components: {
@@ -131,12 +138,16 @@
             PlaylistTab
         },
         async mounted() {
+            if (!AccountManager.isLoggedIn && this.$route.name !== 'login') {
+                this.$router.push('/login?redirect=' + encodeURIComponent(location.href));
+            }
+            this.firstLetter = StreamApi.user.user.substr(0, 1).toUpperCase();
 
-            console.log(NowPlaying, api);
+            console.log(NowPlaying);
             this.searchQuery = this.$route.params.query || '';
             try {
                 //todo offline playlists
-                this.playlists = await api.playlists();
+                this.playlists = await StreamApi.playlists();
                 this.favoritesId = this.playlists.find(p => p.name === 'favorites').playlistid;
             } catch (e) {
             }
@@ -157,12 +168,33 @@
             this.loadInitialSong();
         },
         methods: {
+            toggleShuffle() {
+                this.shuffleEnabled = !this.shuffleEnabled;
+                if (this.shuffleEnabled) {
+                    NowPlaying.reshuffle(NowPlaying.queueName);
+                }
+            },
+            logout() {
+                Swal.fire({
+                    title: 'Are you sure you want to log out?',
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, logout'
+                }).then((result) => {
+                    if (result.value) {
+                        AccountManager.logout();
+                        location.reload();
+                    }
+                })
+            },
             performSearch: function () {
                 this.$router.push('/search/' + this.searchQuery);
                 console.log(this.searchQuery);
             },
             removeFromPlaylist: async function (song, playlistId) {
-                await api.remove(song.id, playlistId);
+                await StreamApi.remove(song.id, playlistId);
                 if (playlistId === this.favoritesId) {
                     NowPlaying.playlistQueues.favorites.update();
                 } else {
@@ -175,7 +207,7 @@
                 if (song.id === '')
                     return;
                 try {
-                    await api.save(song.id, playlistId);
+                    await StreamApi.save(song.id, playlistId);
                 } catch (e) {
                     alert("Can't reach server, song has not been added to playlist");
                 }
@@ -202,8 +234,7 @@
                         return;
                     }
                 }
-                let playlist = NowPlaying.queue.songs;
-                console.log(NowPlaying, NowPlaying.queue.songs);
+                let playlist = this.shuffleEnabled ? NowPlaying.queue.shuffledSongs : NowPlaying.queue.songs;
                 let currentIndex = playlist.findIndex(s => s.id === this.currentSong.id);
 
                 let newIndex = (currentIndex + n) % playlist.length;
@@ -226,7 +257,7 @@
                     localStorage.lastPlayedSong = JSON.stringify(song);
                     let player = document.querySelector('.audio-player');
                     player.pause();
-                    player.src = await MediaHelper.getAudioSource(this.api, song);
+                    player.src = await MediaHelper.getAudioSource(song);
                     player.load();
                     player.onended = () => {
                         this.skip(1);
@@ -360,6 +391,12 @@
         top: 60px;
         width: 100%;
         overflow-y: auto;
+    }
+
+    .shuffle-fab {
+        position: fixed !important;
+        bottom: 115px;
+        right: 10px;
     }
 
     .bottom-player {
