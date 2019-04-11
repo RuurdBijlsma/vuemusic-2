@@ -19,7 +19,7 @@
             </div>
         </div>
 
-        <md-menu md-direction="bottom-end" md-close-on-select md-close-on-click @click="$event.stopPropagation()">
+        <md-menu md-direction="bottom-end" md-close-on-click @click="$event.stopPropagation()">
             <md-button md-menu-trigger>
                 <md-icon>more_vert</md-icon>
             </md-button>

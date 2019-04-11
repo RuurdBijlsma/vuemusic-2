@@ -26,8 +26,11 @@ class MediaHelper {
 
     async cacheSongLocallyIfNeeded(song) {
         let ytId = song.id;
-        if (!await fs.exists(ytId))
-            await this.cacheSongLocally(song);
+        if (!await fs.exists(ytId)) {
+            song.isCaching = true;
+            let url = await StreamApi.getStreamUrl(ytId);
+            await this.cacheSongLocally(song, url);
+        }
     }
 
     async cacheSongLocally(song, url) {
@@ -53,6 +56,4 @@ class MediaHelper {
     }
 }
 
-export default new
-
-MediaHelper();
+export default new MediaHelper();

@@ -20,9 +20,16 @@
                     <md-icon>cancel</md-icon>
                 </md-button>
             </div>
-            <md-button @click="logout()" class="md-icon-button md-primary login-avatar">
-                <md-avatar class="md-avatar-icon">{{firstLetter}}</md-avatar>
-            </md-button>
+            <md-menu md-direction="bottom-end" md-close-on-click>
+                <md-button md-menu-trigger class="md-icon-button md-primary login-avatar">
+                    <md-avatar class="md-avatar-icon">{{firstLetter}}</md-avatar>
+                </md-button>
+
+                <md-menu-content>
+                    <md-menu-item @click="logout()">Log out</md-menu-item>
+                    <md-menu-item @click="cacheAllOnline()">Cache all songs offline</md-menu-item>
+                </md-menu-content>
+            </md-menu>
         </md-content>
         <md-content class="main-content">
             <router-view
@@ -168,6 +175,10 @@
             this.loadInitialSong();
         },
         methods: {
+            async cacheAllOnline(queueName = 'favorites') {
+                let tasks = NowPlaying.playlistQueues[queueName].songs.map(s => MediaHelper.cacheSongLocallyIfNeeded(s));
+                await Promise.all(tasks);
+            },
             toggleShuffle() {
                 this.shuffleEnabled = !this.shuffleEnabled;
                 if (this.shuffleEnabled) {
