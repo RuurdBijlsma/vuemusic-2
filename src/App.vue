@@ -1,5 +1,6 @@
 <!--TODO-->
 <!--Artists  &  playlists & put all this online-->
+<!--Currently playing sharable page for individual songs with visualization :)-->
 <!-- When cache completes sometimes caching spinner doesnt go away-->
 
 <template>
@@ -301,7 +302,7 @@
             },
             setSongMetaData: function (song) {
                 document.title = song.artist + ' - ' + song.title;
-                document.querySelector('meta[name="theme-color"').content = song.color;
+                // document.querySelector('meta[name="theme-color"').content = song.color;
 
                 if (!('mediaSession' in navigator))
                     return;
@@ -357,8 +358,12 @@
 </script>
 
 <style>
+    body {
+        overflow-y: hidden
+    }
 
     #app {
+        overscroll-behavior: none;
         font-family: 'Avenir', Helvetica, Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
@@ -550,13 +555,12 @@
 
     .player-play {
         min-width: 80px;
-        height: 70px;
         text-align: center;
     }
 
     .player-play i {
-        line-height: 70px;
-        height: 70px;
+        /*line-height: 70px;*/
+        /*height: 70px;*/
         font-size: 30px !important;
     }
 
