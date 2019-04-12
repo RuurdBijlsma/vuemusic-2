@@ -2,6 +2,26 @@ import fs from './FileStorage';
 import StreamApi from '@/js/StreamApi';
 
 class MediaHelper {
+    constructor() {
+        this.songStatuses = [];
+    }
+
+    setCachingStatus(song, value) {
+        song.isCaching = value;
+        if (!this.songStatuses.hasOwnProperty(song.id)) {
+            this.songStatuses[song.id] = {isCaching: false, isCached: true}
+        }
+        this.songStatuses[song.id].isCaching = value;
+    }
+
+    setCachedStatus(song, value) {
+        song.isCached = value;
+        if (!this.songStatuses.hasOwnProperty(song.id)) {
+            this.songStatuses[song.id] = {isCaching: false, isCached: true}
+        }
+        this.songStatuses[song.id].isCached = value;
+    }
+
     async getAudioSource(song) {
         let ytId = song.id;
         let fileName = ytId;
@@ -11,23 +31,31 @@ class MediaHelper {
         if (exists)
             url = (await fs.getFileByName(fileName)).toURL();
         else {
-            let cacheNow = !song.isCaching;
+            let cacheNow = !this.isSongCaching(song);
             if (cacheNow)
-                song.isCaching = true;
+                this.setCachingStatus(song, true);
             url = await StreamApi.getStreamUrl(ytId);
-            if (cacheNow)
+            if (cacheNow) {
                 setTimeout(() => this.cacheSongLocally(song, url), 500);
-
+            } else {
+                console.log("Not caching", song.title, 'already in progress', this.isSongCaching(song));
+            }
         }
 
         console.log(url);
         return url;
     }
 
+    isSongCaching(song) {
+        if (this.songStatuses.hasOwnProperty(song.id))
+            return this.songStatuses[song.id].isCaching;
+        return false;
+    }
+
     async cacheSongLocallyIfNeeded(song) {
         let ytId = song.id;
-        if (!await fs.exists(ytId)) {
-            song.isCaching = true;
+        if (!this.isSongCaching(song) && !await fs.exists(ytId)) {
+            this.setCachingStatus(song, true);
             let url = await StreamApi.getStreamUrl(ytId);
             await this.cacheSongLocally(song, url);
         }
@@ -41,8 +69,8 @@ class MediaHelper {
 
         let result = await fs.createFileFromBlob(ytId, audioBlob);
         console.log("Cache complete", song.title, result);
-        song.isCaching = false;
-        song.isCached = true;
+        this.setCachedStatus(song, true);
+        this.setCachingStatus(song, false);
     }
 
     async checkSongsCacheStatus(songs) {
@@ -53,6 +81,10 @@ class MediaHelper {
 
         for (let i = 0; i < results.length; i++)
             songs[i].isCached = results[i];
+
+        for (let song of songs)
+            if (this.songStatuses.hasOwnProperty(song.id))
+                song.isCaching = this.songStatuses[song.id].isCaching;
     }
 }
 

@@ -1,7 +1,6 @@
 <!--TODO-->
 <!--Artists  &  playlists & put all this online-->
 <!--Currently playing sharable page for individual songs with visualization :)-->
-<!-- When cache completes sometimes caching spinner doesnt go away-->
 
 <template>
     <div id="app">
@@ -220,6 +219,10 @@
                     return;
                 try {
                     await StreamApi.save(song.id, playlistId);
+                    if (playlistId === this.favoritesId)
+                        NowPlaying.playlistQueues.favorites.update();
+                    else
+                        NowPlaying.playlistQueues[playlistId].update();
                 } catch (e) {
                     alert("Can't reach server, song has not been added to playlist");
                 }
@@ -269,7 +272,9 @@
                     localStorage.lastPlayedSong = JSON.stringify(song);
                     let player = document.querySelector('.audio-player');
                     player.pause();
-                    player.src = await MediaHelper.getAudioSource(song);
+                    let url = await MediaHelper.getAudioSource(song);
+                    if (this.currentSong.id !== song.id) return;
+                    player.src = url;
                     player.load();
                     player.onended = () => {
                         this.skip(1);

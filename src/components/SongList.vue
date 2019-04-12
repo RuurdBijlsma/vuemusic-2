@@ -24,7 +24,10 @@
         name: 'song-list',
         components: {SongItem},
         data() {
-            return {}
+            return {
+                cachingStatusChecker: -1,
+                cachedStatusChecker: -1,
+            }
         },
         props: {
             currentSong: {type: Song, required: true},
@@ -34,6 +37,9 @@
         methods: {},
         mounted() {
             MediaHelper.checkSongsCacheStatus(this.songs);
+            this.cachedStatusChecker = setInterval(() => {
+                MediaHelper.checkSongsCacheStatus(this.songs);
+            }, 5000);
         },
         watch: {
             songs() {
