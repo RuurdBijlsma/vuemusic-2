@@ -34,6 +34,15 @@ class StreamApi extends CustomApi {
         return await this.post({user: username, password}, 'register');
     }
 
+    async artists(playlistId){
+        return await this.post(this.user, 'artists', playlistId);
+    }
+
+    async artistSongs(artist){
+        let songs = await this.post(this.user, 'artistSongs', artist);
+        return songs.map(s => Song.fromObject(s));
+    }
+
     async search(query) {
         let songs = await this.post(this.user, 'search', query);
         return songs.map(s => Song.fromObject(s));
