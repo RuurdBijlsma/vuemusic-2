@@ -1,5 +1,7 @@
 # VueMusic 2
 
+Server software for this web app can be found at https://github.com/RuurdBijlsma/vm2-server
+
 ## Screenshots
 
 ![Alt text](/gh-img/screenshots.png?raw=true "Screenshots of application showing search, favorite songs and media notification")
