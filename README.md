@@ -1,5 +1,9 @@
-# vuemusic-2
+# VueMusic 2
 
+## Screenshots
+
+![Alt text](/gh-img/screenshots.png?raw=true "Screenshots of application showing search, favorite songs and media notification")
+Screenshots showing media notification, favorite songs page and search result page
 ## Project setup
 ```
 npm install
