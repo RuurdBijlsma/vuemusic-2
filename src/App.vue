@@ -3,6 +3,9 @@
 <!--Currently playing sharable page for individual songs with visualization :)-->
 <!-- Soms cachet een liedje verkeerd, waardoor hij onmogelijk wordt af te spelen voor eeuwig-->
 <!-- If app is started offline, or server hangs, playlist list isn't loaded and song cant be added to playlist-->
+<!--Scroll naar liedje als handmatig op skip wordt gedrukt-->
+<!--Deselect textfield als enter is ingedrukt (search)-->
+<!--Select keyboard als clear search field is ingedrukt-->
 
 <template>
     <div id="app">
