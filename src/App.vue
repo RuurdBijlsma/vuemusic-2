@@ -1,6 +1,8 @@
 <!--TODO-->
 <!--Artists  &  playlists & put all this online-->
 <!--Currently playing sharable page for individual songs with visualization :)-->
+<!-- Soms cachet een liedje verkeerd, waardoor hij onmogelijk wordt af te spelen voor eeuwig-->
+<!-- If app is started offline, or server hangs, playlist list isn't loaded and song cant be added to playlist-->
 
 <template>
     <div id="app">
