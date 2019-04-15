@@ -8,6 +8,7 @@ export default class Song {
         this.color = color;
         this.isCaching = false;
         this.isCached = true;
+        this.scrollIntoView = false;
     }
 
     static fromObject(data) {

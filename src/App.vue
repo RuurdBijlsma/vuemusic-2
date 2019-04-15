@@ -4,8 +4,6 @@
 <!-- Soms cachet een liedje verkeerd, waardoor hij onmogelijk wordt af te spelen voor eeuwig-->
 <!-- If app is started offline, or server hangs, playlist list isn't loaded and song cant be added to playlist-->
 <!--Scroll naar liedje als handmatig op skip wordt gedrukt-->
-<!--Deselect textfield als enter is ingedrukt (search)-->
-<!--Select keyboard als clear search field is ingedrukt-->
 
 <template>
     <div id="app">
@@ -17,10 +15,10 @@
                 </md-button>
                 <input type="text" class="search-input"
                        placeholder="Search"
-                       @keydown.enter="performSearch()"
+                       @keydown.enter="performSearch($event)"
                        v-model="searchQuery">
                 <md-button class="md-icon-button search-cancel"
-                           @click="searchQuery = ''"
+                           @click="clearSearch()"
                            :style="{ opacity: searchQuery === '' ? 0 : 1 }">
                     <md-icon>cancel</md-icon>
                 </md-button>
@@ -205,7 +203,12 @@
                     }
                 })
             },
-            performSearch: function () {
+            clearSearch() {
+                this.searchQuery = '';
+                document.querySelector('.search-input').focus();
+            },
+            performSearch: function (e) {
+                e.target.blur();
                 this.$router.push('/search/' + this.searchQuery);
                 console.log(this.searchQuery);
             },
@@ -261,6 +264,7 @@
                 while (newIndex < 0)
                     newIndex += playlist.length;
 
+                playlist[newIndex].scrollIntoView=true;
                 await this.playSong(playlist[newIndex], NowPlaying.queueName);
             },
             playSong: async function (song, queue = 'favorites') {

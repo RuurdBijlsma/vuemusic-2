@@ -1,5 +1,5 @@
 <template>
-    <div class="song-item"  @click="$emit('play')">
+    <div class="song-item" @click="$emit('play')">
         <div class="thumbnail-square">
             <div class="song-thumbnail"
                  v-bind:style="{ backgroundImage: 'url(' + song.thumbnail + ')' }"></div>
@@ -43,6 +43,17 @@
         },
         methods: {
             secondsToHms: Utils.secondsToHms,
+        },
+        watch: {
+            song: {
+                handler() {
+                    if (this.song.scrollIntoView) {
+                        this.song.scrollIntoView = false;
+                        this.$el.scrollIntoView({behavior: 'smooth'})
+                    }
+                },
+                deep: true
+            }
         }
     }
 </script>
