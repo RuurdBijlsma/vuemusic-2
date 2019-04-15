@@ -49,7 +49,7 @@
                 handler() {
                     if (this.song.scrollIntoView) {
                         this.song.scrollIntoView = false;
-                        this.$el.scrollIntoView({behavior: 'smooth'})
+                        this.$el.scrollIntoView({behavior: 'smooth', block: 'nearest'})
                     }
                 },
                 deep: true
