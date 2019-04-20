@@ -9,8 +9,8 @@
     <div id="app">
         <md-content class="top-toolbar md-primary">
             <div class="search-bar ">
-                <md-button class="md-icon-button search-back" @click="$router.push('/'); searchQuery = ''">
-                    <md-icon v-if="$route.name === 'search'" class="search-icon">arrow_back</md-icon>
+                <md-button class="md-icon-button search-back" @click="$router.go(-1); searchQuery = ''">
+                    <md-icon v-if="['search','artist'].includes($route.name)" class="search-icon">arrow_back</md-icon>
                     <md-icon v-else class="search-icon">search</md-icon>
                 </md-button>
                 <input type="text" class="search-input"
@@ -190,8 +190,8 @@
                 await FileStorage.remove(song.id);
                 await MediaHelper.cacheSongLocallyIfNeeded(song);
             },
-            async cacheAllOnline(queueName = 'favorites') {
-                let tasks = NowPlaying.playlistQueues[queueName].songs.map(s => MediaHelper.cacheSongLocallyIfNeeded(s));
+            async cacheAllOnline() {
+                let tasks = NowPlaying.queue.songs.map(s => MediaHelper.cacheSongLocallyIfNeeded(s));
                 await Promise.all(tasks);
             },
             toggleShuffle() {

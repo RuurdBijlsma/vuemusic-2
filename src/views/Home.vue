@@ -1,7 +1,7 @@
 <template>
     <div class="home">
         <md-tabs md-sync-route class="md-primary">
-            <md-tab id="tab-songs" md-label="Songs" to="/home/songs">
+            <md-tab id="tab-songs" md-label="Songs" to="/">
                 <song-tab
                         @play="playSong"
                         @add="add"

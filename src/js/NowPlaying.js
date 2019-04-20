@@ -20,6 +20,9 @@ class NowPlaying {
     }
 
     setQueue(playlist, songs, update) {
+        if (this.playlistQueues[playlist] === undefined) {
+            this.playlistQueues[playlist] = {};
+        }
         this.playlistQueues[playlist].songs = songs;
         this.playlistQueues[playlist].update = update;
         this.playlistQueues[playlist].shuffledSongs = Utils.shuffle([...songs]);
