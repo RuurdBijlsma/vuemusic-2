@@ -9,7 +9,8 @@
                 <song-item :song="song"
                            @play="$emit('play', song)"
                            @remove="$emit('remove', song)"
-                           @add="$emit('add', song)"></song-item>
+                           @add="$emit('add', song)"
+                           @recache="$emit('recache', song)"></song-item>
             </md-list-item>
         </md-list>
     </div>

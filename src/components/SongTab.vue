@@ -4,6 +4,7 @@
                 @play="playSong"
                 @add="add"
                 @remove="remove"
+                @recache="recache"
                 :songs="songs"
                 :currentSong="currentSong"></song-list>
     </div>
@@ -38,6 +39,9 @@
             },
             playSong: async function (song) {
                 this.$emit('play', song, 'favorites');
+            },
+            recache: async function (song) {
+                this.$emit('recache', song);
             },
             setSongs: function (songs) {
                 this.songs = songs;

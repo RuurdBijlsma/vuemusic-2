@@ -39,6 +39,7 @@
                     @play="playSong"
                     @add="showPlaylistDialog"
                     @remove="removeFromPlaylist"
+                    @recache="recache"
                     :current-song="currentSong"
                     :favorites-id="favoritesId"/>
 
@@ -118,6 +119,7 @@
     import NowPlaying from '@/js/NowPlaying';
     import AccountManager from '@/js/AccountManager';
     import Swal from 'sweetalert2';
+    import FileStorage from "./js/FileStorage";
 
     const isLocal = location.href.includes('localhost') || location.href.includes('127.0.0.1');
     const server = isLocal ? 'http://localhost:3000' : 'https://rtc.ruurd.dev:3000';
@@ -178,6 +180,16 @@
             this.loadInitialSong();
         },
         methods: {
+            async recache(song) {
+                console.log('recache', song);
+                if (this.currentSong.id === song.id)
+                    if (NowPlaying.queue.songs.length > 1)
+                        this.skip(1).then(() => this.togglePlayPause(false));
+                    else
+                        this.currentSong = new Song();
+                await FileStorage.remove(song.id);
+                await MediaHelper.cacheSongLocallyIfNeeded(song);
+            },
             async cacheAllOnline(queueName = 'favorites') {
                 let tasks = NowPlaying.playlistQueues[queueName].songs.map(s => MediaHelper.cacheSongLocallyIfNeeded(s));
                 await Promise.all(tasks);
@@ -264,7 +276,7 @@
                 while (newIndex < 0)
                     newIndex += playlist.length;
 
-                playlist[newIndex].scrollIntoView=true;
+                playlist[newIndex].scrollIntoView = true;
                 await this.playSong(playlist[newIndex], NowPlaying.queueName);
             },
             playSong: async function (song, queue = 'favorites') {
@@ -274,12 +286,19 @@
                 this.togglePlayPause(true);
             },
             loadSong: async function (song) {
+                let player = document.querySelector('.audio-player');
+                if (song.id === this.currentSong.id && player.currentTime && player.duration !== Infinity) {
+                    //if song is already loaded
+                    player.currentTime = 0;
+                    await player.play();
+                    return;
+                }
+
                 return new Promise(async resolve => {
                     this.loading = true;
                     this.currentSong = song;
                     this.setSongMetaData(song);
                     localStorage.lastPlayedSong = JSON.stringify(song);
-                    let player = document.querySelector('.audio-player');
                     player.pause();
                     let url = await MediaHelper.getAudioSource(song);
                     if (this.currentSong.id !== song.id) return;

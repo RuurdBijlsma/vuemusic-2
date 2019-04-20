@@ -33,8 +33,15 @@ class FileStorage {
     }
 
     async getFileByName(fileName, directory = this.root) {
-        let files = await this.getDirectoryFiles(directory)
+        let files = await this.getDirectoryFiles(directory);
         return files.find(f => f.name === fileName);
+    }
+
+    async remove(fileName, directory = this.root) {
+        let file = await this.getFileByName(fileName, directory);
+        return new Promise((resolve, reject) => {
+            file.remove(r => resolve(r), r => reject(r));
+        });
     }
 
     async getDirectoryFiles(directory = this.root) {

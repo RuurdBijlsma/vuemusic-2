@@ -27,6 +27,7 @@
             <md-menu-content>
                 <md-menu-item @click="$emit('remove')">Remove</md-menu-item>
                 <md-menu-item @click="$emit('add')">Add to playlist</md-menu-item>
+                <md-menu-item @click="$emit('recache')">Reload cache</md-menu-item>
             </md-menu-content>
         </md-menu>
     </div>

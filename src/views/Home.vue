@@ -6,6 +6,7 @@
                         @play="playSong"
                         @add="add"
                         @remove="remove"
+                        @recache="recache"
                         :current-song="currentSong"
                         :playlist-id="favoritesId"></song-tab>
             </md-tab>
@@ -15,6 +16,7 @@
                         @play="playSong"
                         @add="add"
                         @remove="remove"
+                        @recache="recache"
                         :current-song="currentSong"
                         :playlist-id="favoritesId"></artist-tab>
             </md-tab>
@@ -56,6 +58,9 @@
             },
             playSong: async function (song, queueName) {
                 this.$emit('play', song, queueName);
+            },
+            recache: async function (song) {
+                this.$emit('recache', song);
             },
         }
     }

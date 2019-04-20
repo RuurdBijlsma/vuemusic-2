@@ -13,6 +13,7 @@
                    @play="playSong"
                    @add="add"
                    @remove="remove"
+                   @recache="recache"
                    :current-song="currentSong"
                    :songs="songs"></song-list>
     </div>
@@ -48,6 +49,9 @@
             },
             playSong: async function (song) {
                 this.$emit('play', song, 'search');
+            },
+            recache: async function (song) {
+                this.$emit('recache', song);
             },
             async search(query) {
                 this.loading = true;
