@@ -4,6 +4,7 @@ import StreamApi from '@/js/StreamApi';
 class MediaHelper {
     constructor() {
         this.songStatuses = [];
+        console.log(fs);
     }
 
     setCachingStatus(song, value) {
@@ -73,12 +74,12 @@ class MediaHelper {
             console.warn("Could not fetch", url, e);
         }
 
-        if (blob) {
+        if (blob && blob.size > 0) {
             let result = await fs.createFileFromBlob(ytId, blob);
             console.log("Cache complete", song.title, result);
             this.setCachedStatus(song, true);
         } else {
-            this.setCachedStatus(song, false);
+            this.setCachedStatus(song, false, {blob});
         }
         this.setCachingStatus(song, false);
     }
