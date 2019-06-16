@@ -63,13 +63,23 @@ class MediaHelper {
 
     async cacheSongLocally(song, url) {
         let ytId = song.id;
-        console.log("Caching song", song.title);
-        let response = await fetch(url);
-        let audioBlob = await response.blob();
+        console.log("Caching song", song.title, url);
+        let blob;
+        try {
+            let response = await fetch(url);
+            blob = await response.blob();
+            console.log('song cache blob', blob);
+        } catch (e) {
+            console.warn("Could not fetch", url, e);
+        }
 
-        let result = await fs.createFileFromBlob(ytId, audioBlob);
-        console.log("Cache complete", song.title, result);
-        this.setCachedStatus(song, true);
+        if (blob) {
+            let result = await fs.createFileFromBlob(ytId, blob);
+            console.log("Cache complete", song.title, result);
+            this.setCachedStatus(song, true);
+        } else {
+            this.setCachedStatus(song, false);
+        }
         this.setCachingStatus(song, false);
     }
 

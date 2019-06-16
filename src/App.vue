@@ -7,7 +7,7 @@
     <div id="app">
         <md-content class="top-toolbar md-primary">
             <div class="search-bar ">
-                <md-button class="md-icon-button search-back" @click="$router.go(-1); searchQuery = ''">
+                <md-button class="md-icon-button search-back" @click="$router.push('/'); searchQuery = ''">
                     <md-icon v-if="['search','artist'].includes($route.name)" class="search-icon">arrow_back</md-icon>
                     <md-icon v-else class="search-icon">search</md-icon>
                 </md-button>
@@ -119,8 +119,9 @@
     import Swal from 'sweetalert2';
     import FileStorage from "./js/FileStorage";
 
-    const isLocal = location.href.includes('localhost') || location.href.includes('127.0.0.1');
-    const server = isLocal ? 'http://localhost:3000' : 'https://rtc.ruurd.dev:3000';
+    // const isLocal = location.href.includes('localhost') || location.href.includes('127.0.0.1');
+    const isLocal = false;
+    const server = isLocal ? 'http://localhost:3000' : 'https://ruurd.dev:3000';
     StreamApi.setServer(server);
 
     export default {
@@ -389,6 +390,8 @@
 </script>
 
 <style>
+    @import url('https:////fonts.googleapis.com/css?family=Roboto:400,500,700,400italic|Material+Icons');
+
     body {
         overflow-y: hidden
     }
